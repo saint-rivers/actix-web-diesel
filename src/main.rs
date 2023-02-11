@@ -10,8 +10,11 @@ use std::env;
 
 use actix_cors::Cors;
 use actix_web::http::header;
+use actix_web::web;
 use actix_web::{middleware::Logger, App, HttpServer};
 use dotenv::dotenv;
+
+use crate::postgres::establish_connection;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -30,6 +33,8 @@ async fn main() -> std::io::Result<()> {
     // let todo_db = AppState::init();
     // let app_data = web::Data::new(todo_db);
 
+    let pool = establish_connection();
+
     println!("Server started successfully");
 
     HttpServer::new(move || {
@@ -45,8 +50,7 @@ async fn main() -> std::io::Result<()> {
             .supports_credentials();
 
         App::new()
-            // .app_data(web::Data::new(pool))
-            // .app_data(web::Data::new(pool.to_owned()))
+            .app_data(web::Data::new(pool.clone()))
             .configure(handler::init_routes)
             .wrap(cors)
             .wrap(Logger::default())

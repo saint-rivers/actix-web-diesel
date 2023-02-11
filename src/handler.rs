@@ -3,7 +3,7 @@ use diesel::prelude::*;
 
 use crate::{
     model::{NewTodo, Todo, TodoPayload},
-    postgres::establish_connection,
+    postgres::PostgresPool,
 };
 
 type DbError = Box<dyn std::error::Error + Send + Sync>;
@@ -32,7 +32,7 @@ fn add_todo(_title: &str, _content: &str, conn: &mut PgConnection) -> Result<Tod
 
 #[post("/todos")]
 async fn create_todo(
-    // conn: web::Data<PgConnection>,
+    pool: web::Data<PostgresPool>,
     payload: web::Json<TodoPayload>,
 ) -> Result<HttpResponse, Error> {
     // let todo = web::block(move || {
@@ -41,7 +41,7 @@ async fn create_todo(
     // })
 
     let todo = web::block(move || {
-        let conn = &mut establish_connection();
+        let conn = &mut pool.get()?;
         add_todo(&payload.title, &payload.content, conn)
     })
     .await?
